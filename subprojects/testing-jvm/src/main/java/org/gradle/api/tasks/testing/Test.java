@@ -428,7 +428,7 @@ public class Test extends AbstractTestTask implements JavaForkOptions, PatternFi
     }
 
     /**
-     * Enables fail fast behavior causing the task will fail on the first failed test.
+     * Enables fail fast behavior causing the task to fail on the first failed test.
      */
     @Option(option = "fail-fast", description = "Stops test execution after the first failed test.")
     public Test failFastOn(boolean ignored) {
@@ -460,7 +460,7 @@ public class Test extends AbstractTestTask implements JavaForkOptions, PatternFi
      *
      * @return whether this task will fail on the first failed test
      */
-    @Input
+    @Internal
     @Override
     public boolean getFailFast() {
         return super.getFailFast();
