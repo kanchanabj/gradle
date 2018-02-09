@@ -82,11 +82,11 @@ subprojects {
 
             replaceJCLConstraintWithAdapter(handler, 'org.codehaus.groovy:groovy-all')
 
-            replaceAsmWithOW2Asm(handler, "com.google.code.findbugs:findbugs")
-            replaceAsmWithOW2Asm(handler, "org.parboiled:parboiled-java")
-
             replaceCglibNodepWithCglib(handler, 'org.spockframework:spock-core')
             replaceCglibNodepWithCglib(handler, 'org.jmock:jmock-legacy')
+
+            replaceAsmWithOW2Asm(handler, "com.google.code.findbugs:findbugs")
+            replaceAsmWithOW2Asm(handler, "org.parboiled:parboiled-java")
 
             //TODO check if we can upgrade the following dependencies and remove the rules
             downgradeIvy(handler, 'org.codehaus.groovy:groovy-all')
