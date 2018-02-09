@@ -85,6 +85,9 @@ subprojects {
             replaceAsmWithOW2Asm(handler, "com.google.code.findbugs:findbugs")
             replaceAsmWithOW2Asm(handler, "org.parboiled:parboiled-java")
 
+            replaceCglibNodepWithCglib(handler, 'org.spockframework:spock-core')
+            replaceCglibNodepWithCglib(handler, 'org.jmock:jmock-legacy')
+
             //TODO check if we can upgrade the following dependencies and remove the rules
             downgradeIvy(handler, 'org.codehaus.groovy:groovy-all')
             downgradeTestNG(handler, 'org.codehaus.groovy:groovy-all')
@@ -170,6 +173,19 @@ def replaceAsmWithOW2Asm(ComponentMetadataHandler handler, String module) {
                     deps.add(group: 'org.ow2.asm', name: it.name)
                 }
                 deps.removeAll { it.group == 'asm' }
+            }
+        }
+    }
+}
+
+def replaceCglibNodepWithCglib(ComponentMetadataHandler handler, String module) {
+    handler.withModule(module) {
+        allVariants {
+            withDependencies { deps ->
+                deps.findAll { it.name == 'cglib-nodep' }.each {
+                    deps.add(group: it.group, name: 'cglib')
+                }
+                deps.removeAll { it.name == 'cglib-nodep' }
             }
         }
     }
