@@ -17,12 +17,17 @@
 package org.gradle.api.tasks.compile
 
 import org.gradle.api.internal.tasks.compile.processing.IncrementalAnnotationProcessorType
+import org.gradle.language.fixtures.AnnotationProcessorFixture
 
 class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends AbstractIncrementalAnnotationProcessingIntegrationTest {
 
     @Override
-    protected IncrementalAnnotationProcessorType getProcessorType() {
-        return IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+    def setup() {
+        withProcessor(new AnnotationProcessorFixture().with {
+            declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            it
+        })
     }
 
     def "all sources are recompiled when any class changes"() {
@@ -36,7 +41,7 @@ class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstr
         run "compileJava"
 
         then:
-        outputs.recompiledClasses("A", "AHelper", "B")
+        outputs.recompiledClasses("A", "AggregatedHelper", "B")
     }
 
     def "the user is informed about non-incremental processors"() {

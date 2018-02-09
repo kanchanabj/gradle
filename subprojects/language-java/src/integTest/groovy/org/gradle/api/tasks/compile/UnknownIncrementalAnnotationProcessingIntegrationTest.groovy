@@ -17,12 +17,13 @@
 package org.gradle.api.tasks.compile
 
 import org.gradle.api.internal.tasks.compile.processing.IncrementalAnnotationProcessorType
+import org.gradle.language.fixtures.AnnotationProcessorFixture
 
 class UnknownIncrementalAnnotationProcessingIntegrationTest extends AbstractIncrementalAnnotationProcessingIntegrationTest {
 
     @Override
-    protected IncrementalAnnotationProcessorType getProcessorType() {
-        return null
+    def setup() {
+        withProcessor(new AnnotationProcessorFixture())
     }
 
     def "all sources are recompiled when any class changes"() {

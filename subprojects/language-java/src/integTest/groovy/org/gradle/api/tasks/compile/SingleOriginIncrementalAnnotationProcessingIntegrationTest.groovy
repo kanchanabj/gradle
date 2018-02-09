@@ -17,12 +17,17 @@
 package org.gradle.api.tasks.compile
 
 import org.gradle.api.internal.tasks.compile.processing.IncrementalAnnotationProcessorType
+import org.gradle.language.fixtures.AnnotationProcessorFixture
 
 class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends AbstractIncrementalAnnotationProcessingIntegrationTest {
 
     @Override
-    protected IncrementalAnnotationProcessorType getProcessorType() {
-        return IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+    def setup() {
+        withProcessor(new AnnotationProcessorFixture().with {
+            declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            it
+        })
     }
 
     def "all sources are recompiled when any class changes"() {
