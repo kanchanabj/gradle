@@ -183,7 +183,7 @@ def replaceCglibNodepWithCglib(ComponentMetadataHandler handler, String module) 
         allVariants {
             withDependencies { deps ->
                 deps.findAll { it.name == 'cglib-nodep' }.each {
-                    deps.add(group: it.group, name: 'cglib')
+                    deps.add(group: it.group, name: 'cglib', version: it.version)
                 }
                 deps.removeAll { it.name == 'cglib-nodep' }
             }
