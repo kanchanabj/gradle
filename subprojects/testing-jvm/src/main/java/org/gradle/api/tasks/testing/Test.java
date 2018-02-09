@@ -441,7 +441,6 @@ public class Test extends AbstractTestTask implements JavaForkOptions, PatternFi
      *
      * @return whether this task will fail on the first failed test
      */
-    @Internal
     @Override
     public boolean getFailFast() {
         return super.getFailFast();
