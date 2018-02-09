@@ -31,6 +31,7 @@ class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstrac
     }
 
     def "all sources are recompiled when any class changes"() {
+        given:
         def a = java "@Helper class A {}"
         java "class B {}"
 
@@ -45,15 +46,51 @@ class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstrac
     }
 
     def "the user is informed about non-incremental processors"() {
+        given:
         def a = java "@Helper class A {}"
+        run "compileJava"
 
         when:
-        run "compileJava"
         a.text = "@Helper class A { public void foo() {} }"
         run "compileJava", "--info"
 
         then:
         output.contains("The following annotation processors don't support incremental compilation:")
         output.contains("Processor (type: SINGLE_ORIGIN)")
+    }
+
+    def "processors must provide an originating element for each source element"() {
+        given:
+        withProcessor(new AnnotationProcessorFixture().with {
+            annotationName = "Broken"
+            declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.UNKNOWN
+            it
+        })
+        java "@Broken class A {}"
+
+        expect:
+        fails"compileJava"
+
+        and:
+        errorOutput.contains("Generated file 'ABroken' must have exactly one originating element, but had 0")
+    }
+
+    def "processors cannot provide multiple originating elements"() {
+        given:
+        withProcessor(new AnnotationProcessorFixture().with {
+            annotationName = "Broken"
+            declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            it
+        })
+        java "@Broken class A {}"
+        java "@Broken class B {}"
+
+        expect:
+        fails"compileJava"
+
+        and:
+        errorOutput.contains("Generated file 'AggregatedBroken' must have exactly one originating element, but had 2")
     }
 }

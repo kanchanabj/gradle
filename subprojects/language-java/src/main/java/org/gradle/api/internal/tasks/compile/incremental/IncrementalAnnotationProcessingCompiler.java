@@ -33,12 +33,12 @@ import java.util.Set;
 /**
  * Sets up incremental annotation processing before delegating to the actual Java compiler.
  */
-class IncrementalAnnotationProcessingDecorator implements Compiler<JavaCompileSpec> {
+class IncrementalAnnotationProcessingCompiler implements Compiler<JavaCompileSpec> {
 
     private final Compiler<JavaCompileSpec> delegate;
     private final AnnotationProcessorDetector annotationProcessorDetector;
 
-    IncrementalAnnotationProcessingDecorator(Compiler<JavaCompileSpec> delegate, AnnotationProcessorDetector annotationProcessorDetector) {
+    IncrementalAnnotationProcessingCompiler(Compiler<JavaCompileSpec> delegate, AnnotationProcessorDetector annotationProcessorDetector) {
         this.delegate = delegate;
         this.annotationProcessorDetector = annotationProcessorDetector;
     }

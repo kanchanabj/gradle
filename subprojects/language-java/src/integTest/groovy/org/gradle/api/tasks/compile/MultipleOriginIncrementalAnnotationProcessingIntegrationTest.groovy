@@ -56,4 +56,44 @@ class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstr
         output.contains("The following annotation processors don't support incremental compilation:")
         output.contains("Processor (type: MULTIPLE_ORIGIN)")
     }
+
+    def "processors must provide an originating element for each source element"() {
+        given:
+        withProcessor(new AnnotationProcessorFixture().with {
+            annotationName = "Broken"
+            declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.UNKNOWN
+            it
+        })
+        java "@Broken class A {}"
+
+        expect:
+        fails"compileJava"
+
+        and:
+        errorOutput.contains("Generated file 'ABroken' must have at least one originating element.")
+    }
+
+    def "a single origin processor is also a valid multi origin processor"() {
+        given:
+        withProcessor(new AnnotationProcessorFixture().with {
+            annotationName = "Single"
+            declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            actualType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            it
+        })
+        java "@Single class A {}"
+
+        expect:
+        succeeds"compileJava"
+    }
+
+    def "processors can provide multiple originating elements"() {
+        given:
+        java "@Helper class A {}"
+        java "@Helper class B {}"
+
+        expect:
+        succeeds"compileJava"
+    }
 }
