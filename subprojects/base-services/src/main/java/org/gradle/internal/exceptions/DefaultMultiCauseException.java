@@ -70,7 +70,11 @@ public class DefaultMultiCauseException extends GradleException implements Multi
     public void initCauses(Iterable<? extends Throwable> causes) {
         this.causes.clear();
         for (Throwable cause : causes) {
-            this.causes.add(cause);
+            if (cause instanceof MultiCauseException) {
+                this.causes.addAll(((MultiCauseException) cause).getCauses());
+            } else {
+                this.causes.add(cause);
+            }
         }
     }
 
