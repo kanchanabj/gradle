@@ -19,10 +19,8 @@ package org.gradle.api.internal.tasks.testing.junit;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.Transformer;
 import org.gradle.api.internal.tasks.testing.filter.TestSelectionMatcher;
 import org.gradle.internal.concurrent.ThreadSafe;
-import org.gradle.util.CollectionUtils;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
 import org.junit.runner.Runner;
@@ -35,6 +33,7 @@ import org.junit.runner.notification.RunNotifier;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class JUnitTestClassExecutor implements Action<String> {
     private final ClassLoader applicationClassLoader;
@@ -69,19 +68,9 @@ public class JUnitTestClassExecutor implements Action<String> {
         List<Filter> filters = new ArrayList<Filter>();
         if (options.hasCategoryConfiguration()) {
             verifyJUnitCategorySupport();
-            Transformer<Class<?>, String> transformer = new Transformer<Class<?>, String>() {
-                public Class<?> transform(final String original) {
-                    try {
-                        return applicationClassLoader.loadClass(original);
-                    } catch (ClassNotFoundException e) {
-                        throw new InvalidUserDataException(String.format("Can't load category class [%s].", original), e);
-                    }
-                }
-            };
-            filters.add(new CategoryFilter(
-                    CollectionUtils.collect(options.getIncludeCategories(), transformer),
-                    CollectionUtils.collect(options.getExcludeCategories(), transformer)
-            ));
+            verifyCategoryClasses(options.getIncludeCategories());
+            verifyCategoryClasses(options.getExcludeCategories());
+            filters.add(new CategoryFilter(options.getIncludeCategories(), options.getExcludeCategories(), applicationClassLoader));
         }
 
         Request request = Request.aClass(testClass);
@@ -114,6 +103,19 @@ public class JUnitTestClassExecutor implements Action<String> {
         RunNotifier notifier = new RunNotifier();
         notifier.addListener(listener);
         runner.run(notifier);
+    }
+
+    private void verifyCategoryClasses(Set<String> categories) {
+        if (categories == null) {
+            return;
+        }
+        for (String cls : categories) {
+            try {
+                applicationClassLoader.loadClass(cls);
+            } catch (ClassNotFoundException e) {
+                throw new InvalidUserDataException(String.format("Can't load category class [%s].", cls), e);
+            }
+        }
     }
 
     private void verifyJUnitCategorySupport() {
