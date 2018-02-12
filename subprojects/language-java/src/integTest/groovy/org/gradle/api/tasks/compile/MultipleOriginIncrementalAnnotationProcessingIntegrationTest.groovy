@@ -17,39 +17,37 @@
 package org.gradle.api.tasks.compile
 
 import org.gradle.api.internal.tasks.compile.processing.IncrementalAnnotationProcessorType
-import org.gradle.language.fixtures.AnnotationProcessorFixture
+import org.gradle.language.fixtures.HelperProcessorFixture
+import org.gradle.language.fixtures.NonIncrementalProcessorFixture
+import org.gradle.language.fixtures.ServiceRegistryProcessorFixture
 
 class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends AbstractIncrementalAnnotationProcessingIntegrationTest {
 
     @Override
     def setup() {
-        withProcessor(new AnnotationProcessorFixture().with {
-            declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
-            it
-        })
+        withProcessor(new ServiceRegistryProcessorFixture())
     }
 
     def "all sources are recompiled when any class changes"() {
-        def a = java "@Helper class A {}"
+        def a = java "@Service class A {}"
         java "class B {}"
 
         outputs.snapshot { run "compileJava" }
 
         when:
-        a.text = "@Helper class A { public void foo() {} }"
+        a.text = "@Service class A { public void foo() {} }"
         run "compileJava"
 
         then:
-        outputs.recompiledClasses("A", "AggregatedHelper", "B")
+        outputs.recompiledClasses("A", "ServiceRegistry", "B")
     }
 
     def "the user is informed about non-incremental processors"() {
-        def a = java "@Helper class A {}"
+        def a = java "@Service class A {}"
 
         when:
         run "compileJava"
-        a.text = "@Helper class A { public void foo() {} }"
+        a.text = "@Service class A { public void foo() {} }"
         run "compileJava", "--info"
 
         then:
@@ -59,30 +57,42 @@ class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstr
 
     def "processors must provide an originating element for each source element"() {
         given:
-        withProcessor(new AnnotationProcessorFixture().with {
-            annotationName = "Broken"
+        withProcessor(new NonIncrementalProcessorFixture().with {
             declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.UNKNOWN
             it
         })
-        java "@Broken class A {}"
+        java "@Thing class A {}"
 
         expect:
         fails"compileJava"
 
         and:
-        errorOutput.contains("Generated file 'ABroken' must have at least one originating element.")
+        errorOutput.contains("Generated file 'AThing' must have at least one originating element.")
+    }
+
+    def "processors can't access resources"() {
+        given:
+        withProcessor(new NonIncrementalProcessorFixture().with {
+            declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
+            it
+        })
+        java "@Thing class A {}"
+
+        expect:
+        fails"compileJava"
+
+        and:
+        errorOutput.contains("Incremental annotation processors are not allowed to read resources.")
+        errorOutput.contains("Incremental annotation processors are not allowed to create resources.")
     }
 
     def "a single origin processor is also a valid multi origin processor"() {
         given:
-        withProcessor(new AnnotationProcessorFixture().with {
-            annotationName = "Single"
+        withProcessor(new HelperProcessorFixture().with {
             declaredType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
             it
         })
-        java "@Single class A {}"
+        java "@Helper class A {}"
 
         expect:
         succeeds"compileJava"
@@ -90,8 +100,8 @@ class MultipleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstr
 
     def "processors can provide multiple originating elements"() {
         given:
-        java "@Helper class A {}"
-        java "@Helper class B {}"
+        java "@Service class A {}"
+        java "@Service class B {}"
 
         expect:
         succeeds"compileJava"

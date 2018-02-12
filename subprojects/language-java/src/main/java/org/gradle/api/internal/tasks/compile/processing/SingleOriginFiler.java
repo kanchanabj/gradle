@@ -29,7 +29,7 @@ class SingleOriginFiler extends IncrementalFiler {
 
     protected void checkOriginatingElements(CharSequence name, Element[] originatingElements, Messager messager) {
         if (originatingElements.length != 1) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Generated file '" + name + "' must have exactly one originating element, but had " + originatingElements.length);
+            messager.printMessage(Diagnostic.Kind.ERROR, "Generated file '" + name + "' must have exactly one originating element, but had " + originatingElements.length + ".");
         }
     }
 

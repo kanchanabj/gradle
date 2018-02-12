@@ -17,17 +17,15 @@
 package org.gradle.api.tasks.compile
 
 import org.gradle.api.internal.tasks.compile.processing.IncrementalAnnotationProcessorType
-import org.gradle.language.fixtures.AnnotationProcessorFixture
+import org.gradle.language.fixtures.HelperProcessorFixture
+import org.gradle.language.fixtures.NonIncrementalProcessorFixture
+import org.gradle.language.fixtures.ServiceRegistryProcessorFixture
 
 class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends AbstractIncrementalAnnotationProcessingIntegrationTest {
 
     @Override
     def setup() {
-        withProcessor(new AnnotationProcessorFixture().with {
-            declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
-            it
-        })
+        withProcessor(new HelperProcessorFixture())
     }
 
     def "all sources are recompiled when any class changes"() {
@@ -61,36 +59,48 @@ class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstrac
 
     def "processors must provide an originating element for each source element"() {
         given:
-        withProcessor(new AnnotationProcessorFixture().with {
-            annotationName = "Broken"
+        withProcessor(new NonIncrementalProcessorFixture().with {
             declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.UNKNOWN
             it
         })
-        java "@Broken class A {}"
+        java "@Thing class A {}"
 
         expect:
         fails"compileJava"
 
         and:
-        errorOutput.contains("Generated file 'ABroken' must have exactly one originating element, but had 0")
+        errorOutput.contains("Generated file 'AThing' must have exactly one originating element, but had 0.")
+    }
+
+    def "processors can't access resources"() {
+        given:
+        withProcessor(new NonIncrementalProcessorFixture().with {
+            declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
+            it
+        })
+        java "@Thing class A {}"
+
+        expect:
+        fails"compileJava"
+
+        and:
+        errorOutput.contains("Incremental annotation processors are not allowed to read resources.")
+        errorOutput.contains("Incremental annotation processors are not allowed to create resources.")
     }
 
     def "processors cannot provide multiple originating elements"() {
         given:
-        withProcessor(new AnnotationProcessorFixture().with {
-            annotationName = "Broken"
+        withProcessor(new ServiceRegistryProcessorFixture().with {
             declaredType = IncrementalAnnotationProcessorType.SINGLE_ORIGIN
-            actualType = IncrementalAnnotationProcessorType.MULTIPLE_ORIGIN
             it
         })
-        java "@Broken class A {}"
-        java "@Broken class B {}"
+        java "@Service class A {}"
+        java "@Service class B {}"
 
         expect:
         fails"compileJava"
 
         and:
-        errorOutput.contains("Generated file 'AggregatedBroken' must have exactly one originating element, but had 2")
+        errorOutput.contains("Generated file 'ServiceRegistry' must have exactly one originating element, but had 2.")
     }
 }
